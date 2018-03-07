@@ -6,6 +6,15 @@ public class Tile : MonoBehaviour
 {
     public Type type;
     public SpriteRenderer sr;
+    public SpriteRenderer overlay;
+    public bool playerSpawn = false;
+    public bool enemySpawn = false;
+    public bool highlight = false;
+    public Illumination illumination = Illumination.NONE;
+    public Vector2 location;
+    public Unit occupant;
+
+    float overlayOpacity = 0.5f;
 
 	// Use this for initialization
 	void Start ()
@@ -16,8 +25,41 @@ public class Tile : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
     {
-		
-	}
+        if (Card.showSpawnTiles && playerSpawn)
+        {
+            illumination = Illumination.SPAWN;
+        } else if (!Card.showSpawnTiles && illumination == Illumination.SPAWN)
+        {
+            illumination = Illumination.NONE;
+        }
+        if (highlight || illumination != Illumination.NONE)
+        {
+            overlay.enabled = true;
+        } else
+        {
+            overlay.enabled = false;
+        }
+        Color overlayColor = Color.white;
+        overlayColor.a = 0.5f;
+        switch (illumination)
+        {
+            case Illumination.ATTACK:
+                overlayColor = Color.red;
+                break;
+            case Illumination.MOVEMENT:
+                overlayColor = Color.blue;
+                break;
+            case Illumination.SPAWN:
+                overlayColor = Color.cyan;
+                break;
+        }
+        if (highlight)
+        {
+            overlayColor = Color.green;
+        }
+        overlayColor.a = overlayOpacity;
+        overlay.color = overlayColor;
+    }
 
     public void Instantiate(Type _type)
     {
@@ -26,17 +68,26 @@ public class Tile : MonoBehaviour
         switch (type)
         {
             case Type.WHITE:
-                sr.color = Color.white;
+                sr.color = Color.grey;
                 break;
             case Type.BLACK:
                 sr.color = Color.black;
                 break;
         }
+        overlay = transform.GetChild(0).GetComponent<SpriteRenderer>();
     }
 
     public enum Type
     {
         WHITE,
         BLACK
+    }
+
+    public enum Illumination
+    {
+        NONE,
+        MOVEMENT,
+        ATTACK,
+        SPAWN
     }
 }

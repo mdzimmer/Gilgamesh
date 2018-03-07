@@ -21,4 +21,10 @@ public class CameraControl : MonoBehaviour
         input.Normalize();
         transform.Translate(input * speed * Time.deltaTime);
     }
+
+    public void Move(Vector3 target)
+    {
+        target.z = transform.position.z;
+        transform.position = target;
+    }
 }
