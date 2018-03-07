@@ -17,6 +17,7 @@ public class Unit : MonoBehaviour
     List<Tile> illuminated;
     int curLife;
     Objective obj;
+    SpriteRenderer sr;
 
 	// Use this for initialization
 	void Start ()
@@ -73,14 +74,20 @@ public class Unit : MonoBehaviour
         }
     }
 
-    public void Initialize(Deck.CardDef _def, Tile startingTile)
+    public void Initialize(Deck.CardDef _def, Tile startingTile, bool _enemy)
     {
         board = FindObjectOfType<Board>();
         illuminated = new List<Tile>();
         def = _def;
+        enemy = _enemy;
         MoveTo(startingTile);
         curLife = def.life;
         obj = FindObjectOfType<Objective>();
+        sr = GetComponent<SpriteRenderer>();
+        if (enemy)
+        {
+            sr.color = Color.red;
+        }
     }
 
     public void TakeDamage(int damage)
@@ -95,7 +102,7 @@ public class Unit : MonoBehaviour
     public void MoveTowards(Tile target, int dist)
     {
         List<Tile> path = board.PathTo(curTile, target);
-        MoveTo(path[Mathf.Min(remainingMovement, path.Count - 1)]);
+        MoveTo(path[Mathf.Min(dist, path.Count - 1)]);
     }
 
     void ClearIllumination()

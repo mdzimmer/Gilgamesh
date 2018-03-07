@@ -45,7 +45,7 @@ public class Card : MonoBehaviour
             if (!mousedOver && targetTile && def.cost <= mana.count)
             {
                 Unit unit = ((GameObject)(GameObject.Instantiate(Resources.Load("Unit")))).GetComponent<Unit>();
-                unit.Initialize(def, targetTile);
+                unit.Initialize(def, targetTile, enemy);
                 hand.Discard(this);
                 mana.Increment(-def.cost);
             } else

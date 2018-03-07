@@ -12,6 +12,7 @@ public class Commander : MonoBehaviour
     Deck deck;
     Counter mana;
     List<Tile> spawnField;
+    int maxMana = 0;
 
     // Use this for initialization
     void Start()
@@ -53,7 +54,8 @@ public class Commander : MonoBehaviour
             unit.remainingMovement = unit.def.movement;
             unit.canAttack = true;
         }
-        mana.Increment(1);
+        maxMana++;
+        mana.Set(maxMana);
         hand.Draw();
         if (enemy)
         {
@@ -83,7 +85,7 @@ public class Commander : MonoBehaviour
                     {
                         continue;
                     }
-                    unit.Initialize(card.def, spawnTile);
+                    unit.Initialize(card.def, spawnTile, enemy);
                     unit.enemy = true;
                     hand.Discard(card);
                     played = true;

@@ -76,7 +76,9 @@ public class Board : MonoBehaviour
 
     public int TileDistance(Tile a, Tile b)
     {
-        return (int)((a.location - b.location).magnitude);
+        int difX = (int)(Mathf.Abs(a.location.x - b.location.x));
+        int difY = (int)(Mathf.Abs(a.location.y - b.location.y));
+        return difX + difY;
     }
 
     public List<Tile> Illuminate(Tile startTile, int movement, int range)
@@ -122,6 +124,8 @@ public class Board : MonoBehaviour
         Dictionary<Tile, int> costSoFar = new Dictionary<Tile, int>();
         cameFrom[start] = null;
         costSoFar[start] = 0;
+        Tile closestNode = null;
+        float closestNodeDistance = Mathf.Infinity;
         while (frontier.Count() > 0)
         {
             Tile current = frontier.Dequeue();
@@ -129,7 +133,13 @@ public class Board : MonoBehaviour
             {
                 break;
             }
-            foreach (Tile next in GetNeighbors(current))
+            int currentDistance = TileDistance(current, goal);
+            if (currentDistance < closestNodeDistance)
+            {
+                closestNode = current;
+                closestNodeDistance = currentDistance;
+            }
+            foreach (Tile next in GetOpenNeighbors(current))
             {
                 int navCost = costSoFar[current] + 1;
                 if (!costSoFar.ContainsKey(next) || navCost < costSoFar[next])
@@ -142,6 +152,10 @@ public class Board : MonoBehaviour
         }
         List<Tile> path = new List<Tile>();
         Tile cur = goal;
+        if (!cameFrom.ContainsKey(goal))
+        {
+            cur = closestNode;
+        }
         while (true) {
             path.Add(cur);
             if (cur == start)
@@ -154,13 +168,13 @@ public class Board : MonoBehaviour
         return path;
     }
 
-    List<Tile> GetNeighbors(Tile tile)
+    List<Tile> GetOpenNeighbors(Tile tile)
     {
         List<Tile> neighbors = new List<Tile>();
         foreach (Vector2 offset in new Vector2[] { new Vector2(-1.0f, 0.0f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 0.0f), new Vector2(0.0f, -1.0f) })
         {
             Tile neighbor = GetTile(tile.location + offset);
-            if (neighbor)
+            if (neighbor && !neighbor.occupant)
             {
                 neighbors.Add(neighbor);
             }
