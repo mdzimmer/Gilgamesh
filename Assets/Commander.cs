@@ -53,6 +53,7 @@ public class Commander : MonoBehaviour
         {
             unit.remainingMovement = unit.def.movement;
             unit.canAttack = true;
+            unit.UpdateTaunters();
         }
         maxMana++;
         mana.Set(maxMana);
@@ -125,13 +126,14 @@ public class Commander : MonoBehaviour
             }
             Unit closestAlly = null;
             float closestDistance = Mathf.Infinity;
-            foreach (Unit ally in units)
+            Unit[] availableTargets = (unit.taunters.Count == 0 ? units : unit.taunters.ToArray());
+            foreach (Unit ally in availableTargets)
             {
                 if (ally.enemy)
                 {
                     continue;
                 }
-                int distance = (int)(unit.curTile.location - ally.curTile.location).magnitude;
+                int distance = board.TileDistance(unit.curTile, ally.curTile);
                 if (distance < closestDistance)
                 {
                     closestAlly = ally;
@@ -140,7 +142,15 @@ public class Commander : MonoBehaviour
             }
             if (closestAlly)
             {
-                unit.MoveTowards(closestAlly.curTile, unit.remainingMovement);
+                int distance = board.TileDistance(unit.curTile, closestAlly.curTile);
+                if (distance <= unit.remainingMovement + unit.def.range)
+                {
+                    unit.MoveTowards(closestAlly.curTile, distance - unit.def.range);
+                    unit.Attack(closestAlly);
+                } else
+                {
+                    unit.MoveTowards(closestAlly.curTile, unit.remainingMovement);
+                }
             }
         }
     }

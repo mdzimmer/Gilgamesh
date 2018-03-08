@@ -9,15 +9,18 @@ public class Unit : MonoBehaviour
     public int remainingMovement = 0;
     public Deck.CardDef def;
     public Tile curTile;
+    public List<Unit> taunters;
 
-    static bool usingUnit = false;
+    public static bool usingUnit = false;
 
     Board board;
     bool inUse = false;
-    List<Tile> illuminated;
+    //static List<Tile> illuminated;
     int curLife;
     Objective obj;
     SpriteRenderer sr;
+    Card showcase;
+    List<Trait> traits;
 
 	// Use this for initialization
 	void Start ()
@@ -28,18 +31,25 @@ public class Unit : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
     {
-        if (!board || illuminated == null)
-        {
-            return;
-        }
         bool mousedOver = (board.curHighlight == curTile && !usingUnit);
-        if (mousedOver && !inUse)
+        //if (mousedOver && !inUse && illuminated.Count == 0)
+        //{
+        //    ClearIllumination();
+        //    illuminated = board.Illuminate(this, curTile, remainingMovement, canAttack ? def.range : 0);
+        //}
+        //else if (!mousedOver && illuminated.Count != 0 && !inUse)
+        //{
+        //    ClearIllumination();
+        //}
+        if (!showcase && !inUse && mousedOver)
         {
-            illuminated = board.Illuminate(curTile, remainingMovement, canAttack ? def.range : 0);
-        }
-        else if (illuminated.Count != 0 && !inUse)
+            showcase = Instantiate(Resources.Load<Card>("Card"));
+            showcase.Initialize(def, false, null, true);
+            showcase.transform.position = transform.position + new Vector3(0.0f, 2.0f, 1.0f) * (enemy ? 1.0f : -1.0f);
+        } else if (showcase && (inUse || !mousedOver))
         {
-            ClearIllumination();
+            Destroy(showcase.gameObject);
+            showcase = null;
         }
         if (enemy)
         {
@@ -58,9 +68,11 @@ public class Unit : MonoBehaviour
             {
                 if (remainingMovement + def.range >= dist)
                 {
-                    MoveTowards(mouseTile, dist - def.range);
-                    mouseTile.occupant.TakeDamage(def.attack);
-                    canAttack = false;
+                    if (taunters.Count == 0 || taunters.Contains(mouseTile.occupant))
+                    {
+                        MoveTowards(mouseTile, dist - def.range);
+                        Attack(mouseTile.occupant);
+                    }
                 }
             } else
             {
@@ -77,7 +89,7 @@ public class Unit : MonoBehaviour
     public void Initialize(Deck.CardDef _def, Tile startingTile, bool _enemy)
     {
         board = FindObjectOfType<Board>();
-        illuminated = new List<Tile>();
+        //illuminated = new List<Tile>();
         def = _def;
         enemy = _enemy;
         MoveTo(startingTile);
@@ -88,6 +100,56 @@ public class Unit : MonoBehaviour
         {
             sr.color = Color.red;
         }
+        traits = new List<Trait>();
+        if (def.description.Contains("Taunt"))
+        {
+            traits.Add(Trait.TAUNT);
+        }
+        if (def.description.Contains("Charge"))
+        {
+            traits.Add(Trait.CHARGE);
+        }
+        if (def.description.Contains("Poison"))
+        {
+            traits.Add(Trait.POISON);
+        }
+        if (traits.Contains(Trait.CHARGE))
+        {
+            remainingMovement = def.movement;
+            canAttack = true;
+        }
+        taunters = new List<Unit>();
+    }
+
+    public void UpdateTaunters()
+    {
+        taunters.Clear();
+        foreach(Unit unit in FindObjectsOfType<Unit>())
+        {
+            if (unit.enemy == enemy)
+            {
+                continue;
+            }
+            if (!unit.traits.Contains(Trait.TAUNT))
+            {
+                continue;
+            }
+            if (board.TileDistance(curTile, unit.curTile) > remainingMovement + def.range)
+            {
+                continue;
+            }
+            taunters.Add(unit);
+        }
+    }
+
+    public void Attack(Unit opponent)
+    {
+        opponent.TakeDamage(def.attack);
+        if (opponent && traits.Contains(Trait.POISON))
+        {
+            opponent.Die();
+        }
+        canAttack = false;
     }
 
     public void TakeDamage(int damage)
@@ -105,38 +167,41 @@ public class Unit : MonoBehaviour
         MoveTo(path[Mathf.Min(dist, path.Count - 1)]);
     }
 
-    void ClearIllumination()
-    {
-        if (illuminated.Count == 0)
-        {
-            return;
-        }
-        foreach (Tile tile in illuminated)
-        {
-            tile.illumination = Tile.Illumination.NONE;
-        }
-        illuminated.Clear();
-    }
-
-    void MoveTo(Tile target)
-    {
-        if (curTile)
-        {
-            curTile.occupant = null;
-            remainingMovement -= (int)(target.location - curTile.location).magnitude;
-        }
-        curTile = target;
-        curTile.occupant = this;
-        transform.position = curTile.transform.position;
-        ClearIllumination();
-    }
-
-    void Die()
+    public void Die()
     {
         if (enemy)
         {
             obj.IncrementProgress(-1);
         }
         Destroy(gameObject);
+    }
+
+
+    //void ClearIllumination()
+    //{
+    //    foreach (Tile tile in illuminated)
+    //    {
+    //        tile.illumination = Tile.Illumination.NONE;
+    //    }
+    //    illuminated.Clear();
+    //}
+
+    void MoveTo(Tile target)
+    {
+        if (curTile)
+        {
+            curTile.occupant = null;
+            remainingMovement -= board.TileDistance(curTile, target);
+        }
+        curTile = target;
+        curTile.occupant = this;
+        transform.position = curTile.transform.position;
+        //ClearIllumination();
+    }
+    enum Trait
+    {
+        TAUNT,
+        CHARGE,
+        POISON
     }
 }

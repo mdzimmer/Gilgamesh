@@ -12,6 +12,7 @@ public class Hand : MonoBehaviour
     float angleBetweenCardsDeg = 2.0f;
     float handOffset = 30.0f;
     int startingHandSize = 5;
+    int maxHandSize = 10;
     Camera cam;
 
 	void Start ()
@@ -37,11 +38,15 @@ public class Hand : MonoBehaviour
 
     public void Draw()
     {
+        if (cards.Count >= maxHandSize)
+        {
+            return;
+        }
         Deck.CardDef cardDef = deck.Draw();
         if (cardDef != null)
         {
             Card card = ((GameObject)(Instantiate(Resources.Load("Card")))).GetComponent<Card>();
-            card.Initialize(cardDef, enemy);
+            card.Initialize(cardDef, enemy, this);
             cards.Add(card);
         }
         UpdateCards();
@@ -49,7 +54,7 @@ public class Hand : MonoBehaviour
 
     public void Discard(Card card)
     {
-        cards.Remove(card);
+        bool success = cards.Remove(card);
         Destroy(card.gameObject);
         UpdateCards();
     }

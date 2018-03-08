@@ -1,0 +1,64 @@
+{
+	"cards" : [
+		{
+			"name" : "Footman",
+			"description" : "Taunt",
+			"visual" : "",
+			"cost" : 1,
+			"movement" : 2,
+			"range" : 1,
+			"life" : 2,
+			"attack" : 1
+		},
+		{
+			"name" : "Cavalry",
+			"description" : "",
+			"visual" : "",
+			"cost" : 2,
+			"movement" : 3,
+			"range" : 1,
+			"life" : 2,
+			"attack" : 1
+		},
+		{
+			"name" : "Assassin",
+			"description" : "Poison",
+			"visual" : "",
+			"cost" : 2,
+			"movement" : 2,
+			"range" : 1,
+			"life" : 1,
+			"attack" : 1
+		},
+		{
+			"name" : "Archer",
+			"description" : "",
+			"visual" : "",
+			"cost" : 1,
+			"movement" : 2,
+			"range" : 2,
+			"life" : 1,
+			"attack" : 1
+		},
+		{
+			"name" : "Lyra",
+			"description" : "Poison",
+			"visual" : "",
+			"cost" : 3,
+			"movement" : 3,
+			"range" : 1,
+			"life" : 2,
+			"attack" : 1
+		},
+		{
+			"name" : "Rick Owens",
+			"description" : "Taunt",
+			"visual" : "",
+			"cost" : 3,
+			"movement" : 1,
+			"range" : 1,
+			"life" : 4,
+			"attack" : 4
+		}
+	]
+}

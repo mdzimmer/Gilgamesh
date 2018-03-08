@@ -1,16 +1,20 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Deck : MonoBehaviour
 {
+    public TextAsset definition;
+    public Counter count;
+
     List<CardDef> cards;
-    Counter count;
-    int deckSize = 30;
+    Dictionary<string, CardDef> cardDefsDict;
 
 	// Use this for initialization
 	void Start ()
     {
+        
 
     }
 	
@@ -22,13 +26,29 @@ public class Deck : MonoBehaviour
 
     public void Initialize()
     {
-        count = FindObjectOfType<Counter>();
-        count.Initialize(deckSize);
         cards = new List<CardDef>();
-        for (int i = 0; i < deckSize; i++)
+        cardDefsDict = new Dictionary<string, CardDef>();
+        CardDefCollection cardDefs = JsonUtility.FromJson<CardDefCollection>(Resources.Load<TextAsset>("cards").text);
+        foreach (CardDef def in cardDefs.cards)
         {
-            cards.Add(new CardDef(1, 1, 1, 1, 1));
+            cardDefsDict[def.name] = def;
         }
+        StartingCards startingCards = JsonUtility.FromJson<StartingCards>(definition.text);
+        foreach (string card in startingCards.cards)
+        {
+            cards.Add(cardDefsDict[card]);
+        }
+        System.Random rng = new System.Random();
+        int n = cards.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            CardDef temp = cards[k];
+            cards[k] = cards[n];
+            cards[n] = temp;
+        }
+        count.Initialize(startingCards.cards.Length);
     }
 
     public CardDef Draw()
@@ -42,7 +62,8 @@ public class Deck : MonoBehaviour
         count.Increment(-1);
         return output;
     }
-    
+
+    [Serializable]
     public class CardDef
     {
         public int cost;
@@ -50,14 +71,20 @@ public class Deck : MonoBehaviour
         public int life;
         public int movement;
         public int range;
+        public string name;
+        public string description;
+        public string visual;
+    }
 
-        public CardDef(int _cost, int _attack, int _life, int _movement, int _range)
-        {
-            cost = _cost;
-            attack = _attack;
-            life = _life;
-            movement = _movement;
-            range = _range;
-        }
+    [Serializable]
+    class CardDefCollection
+    {
+        public CardDef[] cards;
+    }
+
+    [Serializable]
+    class StartingCards
+    {
+        public string[] cards;
     }
 }
