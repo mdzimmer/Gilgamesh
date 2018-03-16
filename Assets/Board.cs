@@ -35,6 +35,9 @@ public class Board : MonoBehaviour
             if (mouseTile)
             {
                 mouseTile.highlight = true;
+				if (Input.GetKey(KeyCode.T)) {
+					mouseTile.SetType ((mouseTile.type == Tile.Type.BLACK) ? Tile.Type.WHITE : Tile.Type.BLACK);
+				}
             }
             curHighlight = mouseTile;
         }
@@ -106,52 +109,47 @@ public class Board : MonoBehaviour
         return difX + difY;
     }
 
-    public void Illuminate(Unit unit)
-    {
-        ClearIllumination();
-        Tile startTile = unit.curTile;
-        int movement = unit.remainingMovement;
-        int range = unit.canAttack ? unit.def.range : 0;
-        int total = movement + range + 1;
-        for (int i = 0; i < total; i++)
-        {
-            for (int j = 0; j < total - i; j++)
-            {
-                //up and down, add unique
-                Tile upRight = GetTile(startTile.location + new Vector2(i, j));
-                Tile downRight = GetTile(startTile.location + new Vector2(i, -j));
-                Tile upLeft = GetTile(startTile.location + new Vector2(-i, j));
-                Tile downLeft = GetTile(startTile.location + new Vector2(-i, -j));
-                foreach (Tile tile in new[] {upRight, downRight, upLeft, downLeft})
-                {
-                    if (!tile)
-                    {
-                        continue;
-                    }
-                    if (tile.type != Tile.Type.WHITE)
-                    {
-                        //dont illuminate impassible terrain
-                    } else if (tile.occupant && tile.occupant.enemy != unit.enemy && (unit.taunters.Count == 0 || unit.taunters.Contains(tile.occupant)))
-                    {
-                        tile.illumination = Tile.Illumination.ATTACK;
-                    } else if (tile.occupant && tile.occupant.enemy != unit.enemy && unit.taunters.Count != 0 && !unit.taunters.Contains(tile.occupant))
-                    {
-                        //no illumination when opponent is being protected by a taunt
-                    } else if (tile.occupant && tile.occupant.enemy == unit.enemy)
-                    {
-                        //no illumination for ally within path
-                    } else if (i + j <= movement)
-                    {
-                        tile.illumination = Tile.Illumination.MOVEMENT;
-                    } else if (unit.taunters.Count == 0)
-                    {
-                        tile.illumination = Tile.Illumination.ATTACK;
-                    }
-                    illuminated.Add(tile);
-                }
-            }
-        }
-    }
+	public void Illuminate(Unit unit)
+	{
+		ClearIllumination();
+		Tile startTile = unit.curTile;
+		Dictionary<Tile, bool> explored = new Dictionary<Tile, bool> ();
+		RecursiveIlluminate (startTile, startTile, explored, unit);
+	}
+
+	void RecursiveIlluminate(Tile start, Tile cur, Dictionary<Tile, bool> explored, Unit unit) {
+		if (!cur || explored.ContainsKey (cur)) {
+			return;
+		}
+		if (cur.type == Tile.Type.BLACK) {
+			explored[cur] = true;
+			return;
+		}
+		int distance = PathTo (start, cur).Count;
+		Unit occupant = cur.occupant;
+		if (distance <= unit.remainingMovement) {
+			if (!occupant) {
+				cur.illumination = Tile.Illumination.MOVEMENT;
+				illuminated.Add (cur);
+			}
+		} else if (distance <= unit.remainingMovement + (unit.canAttack ? unit.def.range : 0)) {
+			if (!occupant || (occupant && occupant.enemy != unit.enemy)) {
+				cur.illumination = Tile.Illumination.ATTACK;
+				illuminated.Add (cur);
+			}
+		} else {
+			explored [cur] = true;
+			return;
+		}
+		explored [cur] = true;
+		Tile up = GetTile(cur.location + new Vector2(0, 1));
+		Tile down = GetTile(cur.location + new Vector2(0, -1));
+		Tile left = GetTile(cur.location + new Vector2(-1, 0));
+		Tile right = GetTile(cur.location + new Vector2(1, 0));
+		foreach (Tile neighbor in new[] {up, down, left, right}) {
+			RecursiveIlluminate (start, neighbor, explored, unit);
+		}
+	}
 
     public Tile GetTile(Vector2 location)
     {
@@ -229,7 +227,7 @@ public class Board : MonoBehaviour
         foreach (Vector2 offset in new Vector2[] { new Vector2(-1.0f, 0.0f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 0.0f), new Vector2(0.0f, -1.0f) })
         {
             Tile neighbor = GetTile(tile.location + offset);
-            if (neighbor && !neighbor.occupant)
+			if (neighbor && neighbor.type == Tile.Type.WHITE)
             {
                 neighbors.Add(neighbor);
             }

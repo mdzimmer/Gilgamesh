@@ -64,18 +64,22 @@ public class Tile : MonoBehaviour
     public void Instantiate(Type _type)
     {
         sr = GetComponent<SpriteRenderer>();
-        type = _type;
-        switch (type)
-        {
-            case Type.WHITE:
-                sr.color = Color.grey;
-                break;
-            case Type.BLACK:
-                sr.color = Color.black;
-                break;
-        }
+		SetType (_type);
         overlay = transform.GetChild(0).GetComponent<SpriteRenderer>();
     }
+
+	public void SetType(Type newType) {
+		type = newType;
+		switch (type)
+		{
+		case Type.WHITE:
+			sr.color = Color.grey;
+			break;
+		case Type.BLACK:
+			sr.color = Color.black;
+			break;
+		}
+	}
 
     public enum Type
     {

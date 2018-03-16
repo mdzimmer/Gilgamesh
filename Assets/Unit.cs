@@ -15,7 +15,6 @@ public class Unit : MonoBehaviour
 
     Board board;
     bool inUse = false;
-    //static List<Tile> illuminated;
     int curLife;
     Objective obj;
     SpriteRenderer sr;
@@ -32,15 +31,6 @@ public class Unit : MonoBehaviour
 	void Update ()
     {
         bool mousedOver = (board.curHighlight == curTile && !usingUnit);
-        //if (mousedOver && !inUse && illuminated.Count == 0)
-        //{
-        //    ClearIllumination();
-        //    illuminated = board.Illuminate(this, curTile, remainingMovement, canAttack ? def.range : 0);
-        //}
-        //else if (!mousedOver && illuminated.Count != 0 && !inUse)
-        //{
-        //    ClearIllumination();
-        //}
         if (!showcase && !inUse && mousedOver)
         {
             showcase = Instantiate(Resources.Load<Card>("Card"));
@@ -63,7 +53,7 @@ public class Unit : MonoBehaviour
         else if (Input.GetMouseButtonUp(0) && inUse)
         {
             Tile mouseTile = board.GetTileAtMouse();
-            int dist = board.TileDistance(mouseTile, curTile);
+			int dist = board.PathTo(mouseTile, curTile).Count;
             if (mouseTile.occupant && mouseTile.occupant.enemy && canAttack)
             {
                 if (remainingMovement + def.range >= dist)
@@ -78,6 +68,7 @@ public class Unit : MonoBehaviour
             {
                 if (dist <= remainingMovement)
                 {
+					Debug.Log (dist + " : " + remainingMovement);
                     MoveTo(mouseTile);
                 }
             }
@@ -164,7 +155,14 @@ public class Unit : MonoBehaviour
     public void MoveTowards(Tile target, int dist)
     {
         List<Tile> path = board.PathTo(curTile, target);
-        MoveTo(path[Mathf.Min(dist, path.Count - 1)]);
+		Tile go = curTile;
+		for (int i = Mathf.Min(dist, path.Count - 1); i >= 0; i--) {
+			if (!path [i].occupant) {
+				go = path [i];
+				break;
+			}
+		}
+		MoveTo (go);
     }
 
     public void Die()
@@ -176,28 +174,19 @@ public class Unit : MonoBehaviour
         Destroy(gameObject);
     }
 
-
-    //void ClearIllumination()
-    //{
-    //    foreach (Tile tile in illuminated)
-    //    {
-    //        tile.illumination = Tile.Illumination.NONE;
-    //    }
-    //    illuminated.Clear();
-    //}
-
     void MoveTo(Tile target)
     {
         if (curTile)
         {
             curTile.occupant = null;
-            remainingMovement -= board.TileDistance(curTile, target);
+			remainingMovement -= board.PathTo(curTile, target).Count;
+			Debug.Log (remainingMovement);
         }
         curTile = target;
         curTile.occupant = this;
         transform.position = curTile.transform.position;
-        //ClearIllumination();
     }
+
     enum Trait
     {
         TAUNT,

@@ -12,7 +12,7 @@
 		},
 		{
 			"name" : "Cavalry",
-			"description" : "",
+			"description" : "Charge",
 			"visual" : "",
 			"cost" : 2,
 			"movement" : 3,
